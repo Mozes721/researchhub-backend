@@ -15,6 +15,7 @@ deploy.zip
 # IDE
 .vscode/
 .idea/
+/venv
 
 # local postgress database docker volume
 database/

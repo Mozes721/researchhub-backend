@@ -5,7 +5,8 @@ config/*
 !config/ci
 config_local/*
 !config_local/__init__.py
-
+venv/*
+__init__
 # Django
 __pycache__/
 

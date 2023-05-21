@@ -24,13 +24,13 @@ from researchhub_comment.related_models.rh_comment_thread_model import (
     RhCommentThreadModel,
 )
 from researchhub_comment.tasks import celery_create_comment_content_src
-from researchhub_comment.models import EncryptedUserOrComment
+
 from utils.models import DefaultAuthenticatedModel, SoftDeletableModel
 
 
 class RhCommentModel(
     AbstractGenericReactionModel, SoftDeletableModel,
-    DefaultAuthenticatedModel, EncryptedUserOrComment
+    DefaultAuthenticatedModel
 ):
     """--- MODEL FIELDS ---"""
 

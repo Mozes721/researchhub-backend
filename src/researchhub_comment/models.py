@@ -9,9 +9,9 @@ key = Fernet.generate_key()
 encoded_key = base64.urlsafe_b64encode(key).decode('utf-8')
 
 
-class EncryptedUserOrComment(models.Model):
-    encrypted_comment = models.TextField()
-    encrypted_username = models.TextField()
+class Encrypted(RhCommentModel):
+    #encrypted_comment = models.TextField()
+    #encrypted_username = models.TextField()
 
     def encrypt(self, data):
         cipher_suite = Fernet(key)
@@ -24,8 +24,11 @@ class EncryptedUserOrComment(models.Model):
         return decrypted_data.decode('utf-8')
 
     def save(self, *args, **kwargs):
-        self.encrypted_comment = self.encrypt(self.encrypted_comment)
-        self.encrypted_username = self.encrypt(self.encrypted_username)
+        encrypted_comment = self.encrypt(self.comment_content_json)
+        self.comment_content_json = encrypted_comment
+        encrypted_user = self.encrypt(self.username)
+        self.username = encrypted_user
+        
         super().save(*args, **kwargs)
 
     class Meta:
