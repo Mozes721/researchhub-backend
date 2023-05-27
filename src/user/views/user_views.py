@@ -763,6 +763,17 @@ class UserViewSet(viewsets.ModelViewSet):
         reinstate_user_task(user.id)
         serialized = UserSerializer(user)
         return Response(serialized.data, status=200)
+    
+    @action(
+            detail=False, 
+            methods=[RequestMethods.POST], 
+            permission_classes=[IsAuthenticated])
+    def annonymize(self, request):
+        user = request.user
+        user.anonymous = not user.anonymous
+        user.save()
+        serialized = UserSerializer(user)
+        return Response(serialized.data, status=200)
 
     @action(
         detail=False,
@@ -805,6 +816,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serialized.data, status=200)
         else:
             raise Exception("Sift verification signature mismatch")
+
+
 
 
 @api_view([RequestMethods.GET])

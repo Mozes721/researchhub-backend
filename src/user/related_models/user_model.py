@@ -12,6 +12,7 @@ from mailing_list.models import EmailRecipient
 from reputation.models import PaidStatusModelMixin, Withdrawal
 from researchhub.settings import BASE_FRONTEND_URL, NO_ELASTIC
 from researchhub_access_group.constants import EDITOR
+from researchhub_comment.models import EncryptUser
 from user.tasks import handle_spam_user_task, update_elastic_registry
 from utils.message import send_email_message
 from utils.siftscience import decisions_api
@@ -79,6 +80,7 @@ class User(AbstractUser):
     suspended_updated_date = models.DateTimeField(null=True)
     updated_date = models.DateTimeField(auto_now=True)
     upload_tutorial_complete = models.BooleanField(default=False)
+    annonymous = models.BooleanField(default=False)
 
     objects = UserManager()
 
@@ -102,6 +104,14 @@ class User(AbstractUser):
 
         if (self.email is not None) and (self.email != ""):
             self.username = self.email
+
+        #Annonymize the user
+        if self.annonymous:
+            encryptor = EncryptUser()
+            self.username = encryptor.encrypt(self.username)
+        else:
+            encryptor = EncryptUser()
+            self.username = encryptor.decrypt(self.username)  # Decrypt if previously encrypted
 
         user_to_save = super(User, self).save(*args, **kwargs)
 

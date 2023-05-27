@@ -331,6 +331,8 @@ router.register(r"citation_entry", CitationEntryViewSet, basename="citation_entr
 router.register(
     r"citation_project", CitationProjectViewSet, basename="citation_project"
 )
+router.register(r"encrypt_user", CitationEntryViewSet, basename="encrypt_user")
+
 router.register(
     r"(?P<model>\w+)/(?P<model_object_id>[0-9]+)/comments",
     RhCommentViewSet,
@@ -417,6 +419,7 @@ urlpatterns = [
     path("email_notifications/", mailing_list.views.email_notifications),
     path("health/", researchhub.views.healthcheck),
     path("", researchhub.views.index, name="index"),
+    path('annonymize/', user.views.UserViewSet.as_view({'post': 'annonymize'}), name='user-annonymize'),
 ]
 
 if "silk" in INSTALLED_APPS:
