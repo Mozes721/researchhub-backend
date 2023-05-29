@@ -416,10 +416,14 @@ urlpatterns = [
         user.views.get_user_popover,
         name="popover_user",
     ),
+    re_path(
+    r"annonymize/(?P<id>[^/.]+)/", 
+    user.views.UserViewSet.as_view({'post': 'annonymize'}), 
+    name='user-annonymize'
+    ),
     path("email_notifications/", mailing_list.views.email_notifications),
     path("health/", researchhub.views.healthcheck),
     path("", researchhub.views.index, name="index"),
-    path('annonymize/', user.views.UserViewSet.as_view({'post': 'annonymize'}), name='user-annonymize'),
 ]
 
 if "silk" in INSTALLED_APPS:
