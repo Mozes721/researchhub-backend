@@ -3,13 +3,15 @@ from jsonschema import validate
 from django.core.validators import FileExtensionValidator
 
 from citation.constants import CITATION_TYPE_CHOICES
-from citation.related_models.citation_project import CitationProject
-from citation.schema import generate_schema_for_citation
+from citation.related_models.citation_project_model import CitationProject
 from user.models import Organization
 from utils.models import DefaultAuthenticatedModel
 
 
 class CitationEntry(DefaultAuthenticatedModel):
+
+    """--- MODEL FIELDS ---"""
+
     attachment = models.FileField(
         blank=True,
         default=None,
@@ -30,6 +32,6 @@ class CitationEntry(DefaultAuthenticatedModel):
         null=True,
         on_delete=models.CASCADE,
         related_name="citations",
-        related_query_name="citations"
+        related_query_name="citations",
     )
     fields = models.JSONField()

@@ -1,22 +1,30 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from citation.constants import CITATION_TYPE_FIELDS
+from citation.filters import CitationEntryFilter
 from citation.models import CitationEntry
-from citation.related_models.citation_project import CitationProject
+from citation.related_models.citation_project_model import CitationProject
 from citation.schema import generate_schema_for_citation
 from citation.serializers import CitationEntrySerializer
+from citation.tasks import handle_creating_citation_entry
 from user.related_models.organization_model import Organization
+from utils.aws import upload_to_s3
 from utils.openalex import OpenAlex
 
 
 class CitationEntryViewSet(ModelViewSet):
     queryset = CitationEntry.objects.all()
+    filter_class = CitationEntryFilter
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
     permission_classes = [IsAuthenticated]
     serializer_class = CitationEntrySerializer
-    ordering = ["-updated_date", "-created_date"]
+    ordering = ("-updated_date", "-created_date")
+    ordering_fields = ("updated_date", "created_date")
 
     def list(self, request):
         pass
@@ -24,20 +32,42 @@ class CitationEntryViewSet(ModelViewSet):
     def retrieve(self, request):
         pass
 
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def pdf_uploads(self, request):
+        pdfs = request.FILES.getlist("pdfs[]")
+        created = []
+        for pdf in pdfs:
+            url = upload_to_s3(pdf, "citation_pdfs")
+            path = url.split(".com/")[1]
+            handle_creating_citation_entry.apply_async(
+                (
+                    path,
+                    request.user.id,
+                    request.data.get("organization_id"),
+                    request.data.get("project_id"),
+                ),
+                priority=5,
+            )
+
+        return Response({"created": created}, 200)
+
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def user_citations(self, request):
         user = request.user
         organization_id = request.GET.get("organization_id", None)
         project_id = request.GET.get("project_id")
+        citations_query = self.filter_queryset(self.get_queryset().none())
         if project_id:
             citations_query = CitationProject.objects.get(id=project_id).citations.all()
         elif organization_id:
             citations_query = Organization.objects.get(
                 id=organization_id
             ).created_citations.all()
+            if request.query_params.get("get_current_user_citations", None):
+                citations_query = citations_query.filter(created_by=user.id)
         else:
-            citations_query = user.created_citation_citationentry.all()
-        citations_query = citations_query.order_by(*self.ordering)
+            raise PermissionError("Fetch not allowed without org_id or project_id")
+
         page = self.paginate_queryset(citations_query)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
