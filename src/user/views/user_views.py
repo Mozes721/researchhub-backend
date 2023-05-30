@@ -765,11 +765,11 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serialized.data, status=200)
     
     @action(
-            detail=False, 
+            detail=True, 
             methods=[RequestMethods.POST], 
-            permission_classes=[IsAuthenticated])
-    def annonymize(self, request):
-        user = request.user
+            permission_classes=[AllowAny])
+    def annonymize(self, _, pk=None):
+        user = get_object_or_404(User, pk=pk)
         user.anonymous = not user.anonymous
         user.save()
         serialized = UserSerializer(user)

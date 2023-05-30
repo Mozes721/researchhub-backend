@@ -417,7 +417,7 @@ urlpatterns = [
         name="popover_user",
     ),
     re_path(
-    r"annonymize/(?P<id>[^/.]+)/", 
+    r"annonymize/(?P<pk>[^/.]+)/", 
     user.views.UserViewSet.as_view({'post': 'annonymize'}), 
     name='user-annonymize'
     ),
