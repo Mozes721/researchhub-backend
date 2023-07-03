@@ -10,6 +10,9 @@ from django.db.models import (
     PositiveIntegerField,
     TextField,
 )
+from django.db import models
+from cryptography.fernet import Fernet
+import base64
 
 from discussion.reaction_models import AbstractGenericReactionModel
 from purchase.models import Purchase
@@ -54,6 +57,7 @@ class RhCommentModel(
         max_length=144,
     )
     is_accepted_answer = BooleanField(null=True)
+    is_anonymous = models.BooleanField(default=False)
     parent = ForeignKey(
         "self",
         blank=True,
@@ -133,6 +137,14 @@ class RhCommentModel(
         else:
             return [self.thread.content_object.created_by]
 
+    @property
+    def anonymity_toggle(self, user_id):
+        if self.is_anonymous:
+            encrypted_id = self._encrypt(user_id)
+            return [encrypted_id]
+        else:
+            return [user_id]
+
     """ --- METHODS --- """
 
     def update_comment_content(self):
@@ -151,6 +163,20 @@ class RhCommentModel(
 
     def decrement_discussion_count(self):
         self._update_related_discussion_count(-1)
+
+    def _cipher_suite(self, key):
+        return Fernet(base64.urlsafe_b64encode(key.encode('utf-8')))
+
+    def _encrypt(self, data):
+        cipher_suite = self._cipher_suite(self.parent.created_by)
+        encrypted_data = cipher_suite.encrypt(data.encode('utf-8'))
+        return encrypted_data.decode('utf-8')
+
+    # not in use currently
+    def _decrypt(self, encrypted_data):
+        cipher_suite = self._cipher_suite(self.parent.created_by)
+        decrypted_data = cipher_suite.decrypt(encrypted_data.encode('utf-8'))
+        return decrypted_data.decode('utf-8')
 
     @classmethod
     def create_from_data(cls, data):

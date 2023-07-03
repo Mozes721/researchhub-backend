@@ -58,6 +58,7 @@ class DynamicRhCommentSerializer(
     bounties = SerializerMethodField()
     user_vote = SerializerMethodField()
     review = SerializerMethodField()
+    anonymous = SerializerMethodField()
 
     class Meta:
         fields = "__all__"
@@ -123,6 +124,9 @@ class DynamicRhCommentSerializer(
             **_context_fields,
         )
         return serializer.data
+
+    def get_anonymous(self, comment):
+        return comment.anonymous
 
     def get_purchases(self, comment):
         context = self.context
